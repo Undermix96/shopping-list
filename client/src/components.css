@@ -230,6 +230,16 @@
   color: var(--bg);
 }
 
+.recommended__chip--disabled,
+.recommended__chip--disabled:hover {
+  background: var(--surface);
+  border-style: dashed;
+  border-color: var(--border);
+  color: var(--text-muted);
+  cursor: default;
+  opacity: 0.6;
+}
+
 .recommended__group {
   margin-top: 0.75rem;
 }

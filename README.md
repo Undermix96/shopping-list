@@ -42,3 +42,11 @@ Open http://localhost:3000. Data is persisted in the `shopping-data` volume.
 - **Frontend:** React 19, Vite 6, TypeScript
 - **Backend:** Node.js (ESM), Express, PDFKit
 - **Storage:** CSV files (`shopping_list.csv`, `recommended_list.csv`)
+
+## Changelog
+
+### 0.5
+
+- **Recommended editing in popup**: Editing the name and category of recommended items now happens in a dedicated modal dialog opened from a menu on each item, instead of inline inputs.
+- **Recommended items reflect list state**: Recommended items that are already present in the shopping list are visually dimmed, non-clickable chips; if the item is removed from the list, the corresponding recommended chip becomes clickable again.
+- **Unique items in the shopping list**: The app now prevents adding duplicate items (case-insensitive) to the shopping list from both the add form and the recommended list, showing an error message if a duplicate is attempted.

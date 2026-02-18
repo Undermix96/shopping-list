@@ -53,8 +53,20 @@ export default function App() {
 
   const addItem = useCallback(
     async (item: string, quantity: string, category: string) => {
-      const entry: ListEntry = { item: item.trim(), quantity: quantity.trim(), category: category.trim() };
-      if (!entry.item) return;
+      const trimmedName = item.trim();
+      const trimmedQuantity = quantity.trim();
+      const trimmedCategory = category.trim();
+      if (!trimmedName) return;
+
+      const exists = list.some(
+        (entry) => entry.item.trim().toLocaleLowerCase() === trimmedName.toLocaleLowerCase()
+      );
+      if (exists) {
+        setError(`"${trimmedName}" is already on your list.`);
+        return;
+      }
+
+      const entry: ListEntry = { item: trimmedName, quantity: trimmedQuantity, category: trimmedCategory };
       const next = [...list, entry];
       setList(next);
       if (entry.category) {
@@ -226,6 +238,7 @@ export default function App() {
         <Recommended
           items={recommended}
           categories={categories}
+          listItems={list.map((entry) => entry.item)}
           onAdd={addItem}
           onUpdate={updateRecommendedItem}
           onDelete={deleteRecommendedItem}

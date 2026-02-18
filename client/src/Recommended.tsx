@@ -10,7 +10,7 @@ type EditState = {
   category: string;
 };
 
-export function Recommended({ items, categories, onAdd, onUpdate, onDelete }: Props) {
+export function Recommended({ items, categories, listItems, onAdd, onUpdate, onDelete }: Props) {
   const [editState, setEditState] = useState<EditState>({
     open: false,
     index: null,
@@ -19,6 +19,10 @@ export function Recommended({ items, categories, onAdd, onUpdate, onDelete }: Pr
   });
   const dialogRef = useRef<HTMLDialogElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const takenNames = new Set(
+    listItems.map((name) => name.trim().toLocaleLowerCase())
+  );
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -102,16 +106,19 @@ export function Recommended({ items, categories, onAdd, onUpdate, onDelete }: Pr
           <div key={key} className="recommended__group">
             <h3 className="recommended__group-title">{categoryLabel(key)}</h3>
             <ul className="recommended__list">
-              {group.map(({ index, name, category }) => (
-                <li key={`${name}-${index}`} className="recommended__row">
-                  <button
-                    type="button"
-                    className="recommended__chip"
-                    onClick={() => onAdd(name, '', category)}
-                    title="Add to shopping list"
-                  >
-                    {name}
-                  </button>
+              {group.map(({ index, name, category }) => {
+                const isOnList = takenNames.has(name.trim().toLocaleLowerCase());
+                return (
+                  <li key={`${name}-${index}`} className="recommended__row">
+                    <button
+                      type="button"
+                      className={`recommended__chip${isOnList ? ' recommended__chip--disabled' : ''}`}
+                      onClick={() => !isOnList && onAdd(name, '', category)}
+                      title={isOnList ? 'Already on your list' : 'Add to shopping list'}
+                      disabled={isOnList}
+                    >
+                      {name}
+                    </button>
                   <button
                     type="button"
                     className="recommended__menu"
@@ -130,8 +137,9 @@ export function Recommended({ items, categories, onAdd, onUpdate, onDelete }: Pr
                   >
                     ×
                   </button>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         );
