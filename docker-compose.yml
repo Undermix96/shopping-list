@@ -1,12 +1,14 @@
 services:
   app:
     image: undermix/shopping-list:latest
+    container_name: shopping-list
     ports:
       - "8200:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
       - DATA_DIR=/data
+      - TZ=Europe/Rome
     volumes:
       - shopping-data:/data
     restart: unless-stopped
