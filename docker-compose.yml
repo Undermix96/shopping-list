@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: undermix/shopping-list:latest
     ports:
       - "8200:3000"
     environment:
