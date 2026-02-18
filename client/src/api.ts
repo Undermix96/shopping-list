@@ -19,11 +19,31 @@ export async function saveList(list: ListEntry[]): Promise<ListEntry[]> {
   return data.list ?? [];
 }
 
-export async function fetchRecommended(): Promise<string[]> {
+export async function fetchRecommended(): Promise<RecommendedItem[]> {
   const res = await fetch('/api/recommended');
   if (!res.ok) throw new Error('Failed to load recommended');
   const data = await res.json();
-  return data.items ?? [];
+  const raw = data.items ?? [];
+  if (!Array.isArray(raw)) return [];
+
+  // Backward/loose compatibility:
+  // - legacy: ["Milk", "Eggs"]
+  // - current: [{ item: "Milk", category: "Drinks" }]
+  return raw
+    .map((r: unknown) => {
+      if (typeof r === 'string') {
+        return { item: r.trim(), category: '' };
+      }
+      if (r && typeof r === 'object') {
+        const obj = r as { item?: unknown; category?: unknown };
+        return {
+          item: String(obj.item ?? '').trim(),
+          category: String(obj.category ?? '').trim(),
+        };
+      }
+      return { item: '', category: '' };
+    })
+    .filter((r) => r.item);
 }
 
 export async function resetList(): Promise<{ list: ListEntry[]; items: RecommendedItem[] }> {
