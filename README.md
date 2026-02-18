@@ -45,6 +45,11 @@ Open http://localhost:3000. Data is persisted in the `shopping-data` volume.
 
 ## Changelog
 
+### 0.5.5
+
+- **Improved PDF export layout**: Replaced the old export template with a cleaner, more readable design (category blocks with clear separators, table-style rows, and checkboxes).
+- **Print-friendly colors**: Uses a subtle color palette that still looks good when printed in grayscale (contrast-based styling with light fills and dividers).
+
 ### 0.5
 
 - **Recommended editing in popup**: Editing the name and category of recommended items now happens in a dedicated modal dialog opened from a menu on each item, instead of inline inputs.
