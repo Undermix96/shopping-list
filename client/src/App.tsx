@@ -66,6 +66,21 @@ export default function App() {
     [list]
   );
 
+  const updateQuantity = useCallback(
+    async (index: number, quantity: string) => {
+      const next = list.map((entry, i) =>
+        i === index ? { ...entry, quantity: quantity.trim() } : entry
+      );
+      setList(next);
+      try {
+        await saveList(next);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to save');
+      }
+    },
+    [list]
+  );
+
   const handleReset = useCallback(async () => {
     try {
       const { list: newList, items } = await resetList();
@@ -112,7 +127,7 @@ export default function App() {
 
       <main className="main">
         <AddItem onAdd={addItem} />
-        <List list={list} onRemove={removeItem} />
+        <List list={list} onRemove={removeItem} onUpdateQuantity={updateQuantity} />
         <Recommended items={recommended} onAdd={addItem} />
         <Actions
           onExportPdf={handleExportPdf}

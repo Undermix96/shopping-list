@@ -3,9 +3,10 @@ import type { ListEntry } from './api';
 type Props = {
   list: ListEntry[];
   onRemove: (index: number) => void;
+  onUpdateQuantity: (index: number, quantity: string) => void;
 };
 
-export function List({ list, onRemove }: Props) {
+export function List({ list, onRemove, onUpdateQuantity }: Props) {
   if (list.length === 0) {
     return (
       <section className="card list" aria-label="Shopping list">
@@ -22,9 +23,17 @@ export function List({ list, onRemove }: Props) {
         {list.map((entry, index) => (
           <li key={`${entry.item}-${index}`} className="list__row">
             <span className="list__cell list__cell--item">{entry.item}</span>
-            {entry.quantity ? (
-              <span className="list__cell list__cell--qty">{entry.quantity}</span>
-            ) : null}
+            <label className="visually-hidden" htmlFor={`qty-${index}`}>
+              Quantity for {entry.item}
+            </label>
+            <input
+              id={`qty-${index}`}
+              type="text"
+              className="list__cell list__cell--qty-input"
+              placeholder="Qty"
+              value={entry.quantity}
+              onChange={(e) => onUpdateQuantity(index, e.target.value)}
+            />
             <button
               type="button"
               className="list__remove"
