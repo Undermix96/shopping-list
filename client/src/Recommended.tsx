@@ -1,8 +1,69 @@
+import { useEffect, useRef, useState } from 'react';
 import type { Props } from './types';
 
 const UNCATEGORIZED_KEY = '__uncategorized__';
 
+type EditState = {
+  open: boolean;
+  index: number | null;
+  name: string;
+  category: string;
+};
+
 export function Recommended({ items, categories, onAdd, onUpdate, onDelete }: Props) {
+  const [editState, setEditState] = useState<EditState>({
+    open: false,
+    index: null,
+    name: '',
+    category: '',
+  });
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (editState.open) {
+      dialog.showModal();
+      nameInputRef.current?.focus();
+    } else if (dialog.open) {
+      dialog.close();
+    }
+  }, [editState.open]);
+
+  const openEdit = (index: number, name: string, category: string) => {
+    setEditState({
+      open: true,
+      index,
+      name,
+      category,
+    });
+  };
+
+  const handleClose = () => {
+    setEditState((prev) => ({
+      ...prev,
+      open: false,
+    }));
+  };
+
+  const handleSave = () => {
+    if (editState.index == null) return;
+    const trimmedName = editState.name.trim();
+    const trimmedCategory = editState.category.trim();
+    if (!trimmedName) {
+      // Don't allow saving empty names; just keep dialog open.
+      return;
+    }
+    onUpdate(editState.index, trimmedName, trimmedCategory);
+    setEditState({
+      open: false,
+      index: null,
+      name: '',
+      category: '',
+    });
+  };
+
   if (items.length === 0) {
     return (
       <section className="card recommended" aria-label="Recommended for next time">
@@ -32,8 +93,8 @@ export function Recommended({ items, categories, onAdd, onUpdate, onDelete }: Pr
     <section className="card recommended" aria-label="Recommended for next time">
       <h2 className="card__title">Recommended</h2>
       <p className="recommended__hint">
-        Tap to add to your list, or edit name/category. Items without a category appear under &quot;Everything
-        else&quot;.
+        Tap to add to your list. Use the menu on each item to edit name or category. Items without a category appear
+        under &quot;Everything else&quot;.
       </p>
       {sortedKeys.map((key) => {
         const group = groups.get(key)!;
@@ -51,26 +112,15 @@ export function Recommended({ items, categories, onAdd, onUpdate, onDelete }: Pr
                   >
                     {name}
                   </button>
-                  <input
-                    type="text"
-                    className="recommended__input recommended__input--name"
-                    value={name}
-                    onChange={(e) => onUpdate(index, e.target.value, category)}
-                    aria-label={`Edit name for ${name}`}
-                  />
-                  <select
-                    className="recommended__input recommended__input--category"
-                    value={category}
-                    onChange={(e) => onUpdate(index, name, e.target.value)}
-                    aria-label={`Category for ${name}`}
+                  <button
+                    type="button"
+                    className="recommended__menu"
+                    onClick={() => openEdit(index, name, category)}
+                    aria-label={`Edit ${name}`}
+                    title="Edit name or category"
                   >
-                    <option value="">Everything else</option>
-                    {categories.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+                    ⋯
+                  </button>
                   <button
                     type="button"
                     className="recommended__delete"
@@ -86,6 +136,62 @@ export function Recommended({ items, categories, onAdd, onUpdate, onDelete }: Pr
           </div>
         );
       })}
+      <dialog
+        ref={dialogRef}
+        className="modal"
+        onCancel={handleClose}
+        onClose={handleClose}
+        aria-labelledby="recommended-edit-title"
+      >
+        <h2 id="recommended-edit-title" className="modal__title">
+          Edit recommended item
+        </h2>
+        <div className="modal__body">
+          <label className="modal__field">
+            <span className="modal__label">Name</span>
+            <input
+              ref={nameInputRef}
+              type="text"
+              className="add-item__input add-item__input--item"
+              value={editState.name}
+              onChange={(e) =>
+                setEditState((prev) => ({
+                  ...prev,
+                  name: e.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="modal__field">
+            <span className="modal__label">Category</span>
+            <select
+              className="add-item__input add-item__input--category"
+              value={editState.category}
+              onChange={(e) =>
+                setEditState((prev) => ({
+                  ...prev,
+                  category: e.target.value,
+                }))
+              }
+            >
+              <option value="">Everything else</option>
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="modal__actions">
+          <button type="button" className="btn btn--secondary" onClick={handleClose}>
+            Cancel
+          </button>
+          <button type="button" className="btn btn--primary" onClick={handleSave}>
+            Save
+          </button>
+        </div>
+      </dialog>
     </section>
   );
 }
