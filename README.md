@@ -45,6 +45,10 @@ Open http://localhost:3000. Data is persisted in the `shopping-data` volume.
 
 ## Changelog
 
+### 0.5.6
+
+- **Recommended layout improvements**: Recommended items within each category now flow horizontally and wrap onto new lines, so chips sit side by side when there is enough space instead of forming a single vertical column.
+
 ### 0.5.5
 
 - **Improved PDF export layout**: Replaced the old export template with a cleaner, more readable design (category blocks with clear separators, table-style rows, and checkboxes).
