@@ -134,7 +134,9 @@ app.post('/api/export/pdf', async (req, res) => {
   }
 });
 
-const clientPath = path.join(__dirname, '..', '..', 'client', 'dist');
+// In Docker the server runs from /app and the built client is copied to /app/client/dist
+// __dirname resolves to /app/src, so we only need to go up one level to reach /app
+const clientPath = path.join(__dirname, '..', 'client', 'dist');
 if (existsSync(clientPath)) {
   app.use(express.static(clientPath));
   app.get('*', (req, res) => {
