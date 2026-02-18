@@ -22,29 +22,66 @@ export function createPdf(list) {
     doc.moveDown(0.5);
     doc.fontSize(FONT_SIZE);
 
-    const startY = doc.y;
-    let y = startY;
+    const groups = new Map();
+    list.forEach((entry) => {
+      const category = String(entry.category || '').trim();
+      const key = category || '__uncategorized__';
+      const group = groups.get(key) || [];
+      group.push(entry);
+      groups.set(key, group);
+    });
+
+    const sortedKeys = Array.from(groups.keys()).sort((a, b) => {
+      if (a === '__uncategorized__') return 1;
+      if (b === '__uncategorized__') return -1;
+      return a.localeCompare(b, undefined, { sensitivity: 'base' });
+    });
+
+    const categoryLabel = (key) => (key === '__uncategorized__' ? 'Everything else' : key);
+
+    let y = doc.y;
     let col = 0;
 
-    list.forEach((entry, index) => {
-      const item = String(entry.item || '').trim();
-      const qty = String(entry.quantity ?? '').trim();
-      const text = qty ? `${index + 1}. ${item} — ${qty}` : `${index + 1}. ${item}`;
-      const x = MARGIN + col * colWidth;
+    sortedKeys.forEach((key, groupIndex) => {
+      const entries = groups.get(key) || [];
+      if (!entries.length) return;
+
+      if (groupIndex > 0) {
+        y += ROW_HEIGHT;
+      }
 
       if (y + ROW_HEIGHT > A4_HEIGHT - MARGIN) {
         doc.addPage({ size: 'A4', margin: MARGIN });
         y = MARGIN;
-        col = 0;
       }
 
-      doc.text(text, x, y, { width: colWidth - 8, continued: false });
+      doc.fontSize(FONT_SIZE + 1).text(categoryLabel(key), MARGIN, y, {
+        width: contentWidth,
+      });
+      doc.fontSize(FONT_SIZE);
+      y += ROW_HEIGHT;
+      col = 0;
 
-      col += 1;
-      if (col >= COLS) {
-        col = 0;
-        y += ROW_HEIGHT + 4;
-      }
+      entries.forEach((entry, index) => {
+        const item = String(entry.item || '').trim();
+        const qty = String(entry.quantity ?? '').trim();
+        const text = qty ? `${index + 1}. ${item} — ${qty}` : `${index + 1}. ${item}`;
+        const x = MARGIN + col * colWidth;
+
+        if (y + ROW_HEIGHT > A4_HEIGHT - MARGIN) {
+          doc.addPage({ size: 'A4', margin: MARGIN });
+          y = MARGIN;
+          col = 0;
+        }
+
+        doc.text(text, x, y, { width: colWidth - 8, continued: false });
+
+        col += 1;
+        if (col >= COLS) {
+          col = 0;
+          y += ROW_HEIGHT + 4;
+        }
+      });
     });
 
     doc.end();

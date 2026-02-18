@@ -1,4 +1,5 @@
-export type ListEntry = { item: string; quantity: string };
+export type ListEntry = { item: string; quantity: string; category: string };
+export type RecommendedItem = { item: string; category: string };
 
 export async function fetchList(): Promise<ListEntry[]> {
   const res = await fetch('/api/list');
@@ -25,10 +26,21 @@ export async function fetchRecommended(): Promise<string[]> {
   return data.items ?? [];
 }
 
-export async function resetList(): Promise<{ list: ListEntry[]; items: string[] }> {
+export async function resetList(): Promise<{ list: ListEntry[]; items: RecommendedItem[] }> {
   const res = await fetch('/api/reset', { method: 'POST' });
   if (!res.ok) throw new Error('Failed to reset');
   return res.json();
+}
+
+export async function saveRecommended(items: RecommendedItem[]): Promise<RecommendedItem[]> {
+  const res = await fetch('/api/recommended', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items }),
+  });
+  if (!res.ok) throw new Error('Failed to save recommended');
+  const data = await res.json();
+  return data.items ?? [];
 }
 
 export async function downloadPdf(list: ListEntry[]): Promise<void> {

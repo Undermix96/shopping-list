@@ -5,7 +5,9 @@ import {
   fetchRecommended,
   resetList,
   downloadPdf,
+  saveRecommended,
   type ListEntry,
+  type RecommendedItem,
 } from './api';
 import { AddItem } from './AddItem';
 import { List } from './List';
@@ -16,7 +18,8 @@ import './App.css';
 
 export default function App() {
   const [list, setList] = useState<ListEntry[]>([]);
-  const [recommended, setRecommended] = useState<string[]>([]);
+  const [recommended, setRecommended] = useState<RecommendedItem[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
@@ -27,6 +30,16 @@ export default function App() {
       const [listData, recData] = await Promise.all([fetchList(), fetchRecommended()]);
       setList(listData);
       setRecommended(recData);
+      const cats = new Set<string>();
+      listData.forEach((entry) => {
+        const c = entry.category?.trim();
+        if (c) cats.add(c);
+      });
+      recData.forEach((entry) => {
+        const c = entry.category?.trim();
+        if (c) cats.add(c);
+      });
+      setCategories(Array.from(cats).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong');
     } finally {
@@ -39,11 +52,18 @@ export default function App() {
   }, [load]);
 
   const addItem = useCallback(
-    async (item: string, quantity: string) => {
-      const entry: ListEntry = { item: item.trim(), quantity: quantity.trim() };
+    async (item: string, quantity: string, category: string) => {
+      const entry: ListEntry = { item: item.trim(), quantity: quantity.trim(), category: category.trim() };
       if (!entry.item) return;
       const next = [...list, entry];
       setList(next);
+      if (entry.category) {
+        setCategories((prev) =>
+          prev.includes(entry.category)
+            ? prev
+            : [...prev, entry.category].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+        );
+      }
       try {
         await saveList(next);
       } catch (e) {
@@ -81,12 +101,81 @@ export default function App() {
     [list]
   );
 
+  const updateCategory = useCallback(
+    async (index: number, category: string) => {
+      const next = list.map((entry, i) =>
+        i === index ? { ...entry, category: category.trim() } : entry
+      );
+      setList(next);
+      const trimmed = category.trim();
+      if (trimmed) {
+        setCategories((prev) =>
+          prev.includes(trimmed)
+            ? prev
+            : [...prev, trimmed].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+        );
+      }
+      try {
+        await saveList(next);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to save');
+      }
+    },
+    [list]
+  );
+
+  const updateRecommendedItem = useCallback(
+    async (index: number, item: string, category: string) => {
+      const next = recommended.map((entry, i) =>
+        i === index ? { item: item.trim(), category: category.trim() } : entry
+      );
+      setRecommended(next);
+      const trimmed = category.trim();
+      if (trimmed) {
+        setCategories((prev) =>
+          prev.includes(trimmed)
+            ? prev
+            : [...prev, trimmed].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+        );
+      }
+      try {
+        await saveRecommended(next);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to save recommended');
+      }
+    },
+    [recommended]
+  );
+
+  const deleteRecommendedItem = useCallback(
+    async (index: number) => {
+      const next = recommended.filter((_, i) => i !== index);
+      setRecommended(next);
+      try {
+        await saveRecommended(next);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to save recommended');
+      }
+    },
+    [recommended]
+  );
+
   const handleReset = useCallback(async () => {
     try {
       const { list: newList, items } = await resetList();
       setList(newList);
       setRecommended(items);
       setResetOpen(false);
+      const cats = new Set<string>();
+      newList.forEach((entry) => {
+        const c = entry.category?.trim();
+        if (c) cats.add(c);
+      });
+      items.forEach((entry) => {
+        const c = entry.category?.trim();
+        if (c) cats.add(c);
+      });
+      setCategories(Array.from(cats).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to reset');
     }
@@ -126,9 +215,21 @@ export default function App() {
       )}
 
       <main className="main">
-        <AddItem onAdd={addItem} />
-        <List list={list} onRemove={removeItem} onUpdateQuantity={updateQuantity} />
-        <Recommended items={recommended} onAdd={addItem} />
+        <AddItem onAdd={addItem} categories={categories} />
+        <List
+          list={list}
+          categories={categories}
+          onRemove={removeItem}
+          onUpdateQuantity={updateQuantity}
+          onUpdateCategory={updateCategory}
+        />
+        <Recommended
+          items={recommended}
+          categories={categories}
+          onAdd={addItem}
+          onUpdate={updateRecommendedItem}
+          onDelete={deleteRecommendedItem}
+        />
         <Actions
           onExportPdf={handleExportPdf}
           onReset={() => setResetOpen(true)}

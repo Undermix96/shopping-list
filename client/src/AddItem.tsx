@@ -1,21 +1,24 @@
 import { useState, useRef } from 'react';
 
 type Props = {
-  onAdd: (item: string, quantity: string) => void;
+  onAdd: (item: string, quantity: string, category: string) => void;
+  categories: string[];
 };
 
-export function AddItem({ onAdd }: Props) {
+export function AddItem({ onAdd, categories }: Props) {
   const [item, setItem] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [category, setCategory] = useState('');
   const itemRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = item.trim();
     if (!trimmed) return;
-    onAdd(trimmed, quantity.trim());
+    onAdd(trimmed, quantity.trim(), category.trim());
     setItem('');
     setQuantity('');
+    setCategory('');
     itemRef.current?.focus();
   };
 
@@ -50,10 +53,28 @@ export function AddItem({ onAdd }: Props) {
             onChange={(e) => setQuantity(e.target.value)}
             autoComplete="off"
           />
+          <label htmlFor="category" className="visually-hidden">
+            Category
+          </label>
+          <input
+            id="category"
+            type="text"
+            className="add-item__input add-item__input--category"
+            placeholder="Category (optional)"
+            list="category-options"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            autoComplete="off"
+          />
         </div>
         <button type="submit" className="btn btn--primary add-item__submit">
           Add
         </button>
+        <datalist id="category-options">
+          {categories.map((name) => (
+            <option key={name} value={name} />
+          ))}
+        </datalist>
       </form>
     </section>
   );
