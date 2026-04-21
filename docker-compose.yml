@@ -2,8 +2,10 @@ services:
   app:
     image: undermix/shopping-list:latest
     container_name: shopping-list
-    ports:
-      - "8200:3000"
+    networks:
+      - proxy
+    #ports:
+    #  - "8200:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -12,6 +14,17 @@ services:
     volumes:
       - shopping-data:/data
     restart: unless-stopped
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.shoppinglist.rule=Host(`shopping.undermix.it`)'
+      - 'traefik.http.routers.shoppinglist.entrypoints=websecure'
+      - 'traefik.http.routers.shoppinglist.tls.certresolver=cf'
+      - 'traefik.http.services.shoppinglist.loadbalancer.server.port=3000'
+      - 'traefik.docker.network=proxy'
 
 volumes:
   shopping-data:
+
+networks:
+  proxy:
+    external: true
